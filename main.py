@@ -15,7 +15,7 @@ class HeroPlane(pygame.sprite.Sprite):
 
         # 根据图片image获取矩形对象
         self.rect = self.image.get_rect()  # rect:矩形
-        self.rect.topleft = [480 / 2 - 102 / 2, 700 - 126]
+        self.rect.topleft = [Manager.bg_size[0] / 2 - 102 / 2, Manager.bg_size[1] - 126]
         # 飞机速度
         self.speed = 10
         # 窗口
@@ -60,8 +60,8 @@ class HeroPlane(pygame.sprite.Sprite):
 
         if self.rect.left < 0:
             self.rect.left = 0
-        elif self.rect.left > 480 - 102:
-            self.rect.left = 480 - 102
+        elif self.rect.left > Manager.bg_size[0] - 102:
+            self.rect.left = Manager.bg_size[0] - 102
 
         # # 遍历所有子弹
         # for bullet in self.bullets:
@@ -109,7 +109,7 @@ class EnemyPlane(pygame.sprite.Sprite):
         self.bullets = pygame.sprite.Group()
 
         # 飞机速度
-        self.speed = 10
+        self.speed = 5
 
         # 窗口
         self.screen = screen
@@ -129,7 +129,7 @@ class EnemyPlane(pygame.sprite.Sprite):
 
         if self.rect.right < 0:
             self.direct = 'right'
-        elif self.rect.right > 480 - 57:
+        elif self.rect.right > Manager.bg_size[0] - 57:
             self.direct = 'left'
 
     def display(self):
@@ -236,12 +236,44 @@ class Bomb(object):
             self.mVisible = False
 
 
+# 地图
+class Map(object):
+    # 初始化地图
+    def __init__(self, screen):
+        self.mImage1 = pygame.image.load("./images/background.png")
+        self.mImage2 = pygame.image.load("./images/background.png")
+        # 窗口
+        self.screen = screen
+        # 地图初始位置
+        self.y1 = 0
+        self.y2 = -Manager.bg_size[1]
+
+    # 移动地图
+    def move(self):
+        self.y1 += 2
+        self.y2 += 2
+        if self.y1 >= Manager.bg_size[1]:
+            self.y1 = 0
+        elif self.y2 >= 0:
+            self.y2 = -Manager.bg_size[1]
+
+    # 移动地图
+    def draw(self):
+        self.screen.blit(self.mImage1, (0, self.y1))
+        self.screen.blit(self.mImage2, (0, self.y2))
+
+
 class Manager(object):
+    bg_size = (480, 700)
+
     def __init__(self):
+        pygame.init()
         # 创建窗口
-        self.screen = pygame.display.set_mode((480, 700), 0, 32)
+        self.screen = pygame.display.set_mode(Manager.bg_size, 0, 32)
         # 创建背景图片
-        self.background = pygame.image.load('./images/background.png')
+        # self.background = pygame.image.load('./images/background.png')
+        self.map = Map(self.screen)
+
         # 初始化一个装玩家精灵的group
         self.players = pygame.sprite.Group()
         # 初始化一个装敌方精灵的group
@@ -268,6 +300,19 @@ class Manager(object):
         enemy = EnemyPlane(self.screen)
         self.enemies.add(enemy)
 
+    # 绘制文字
+    def drawtext(self, text, x, y, textheight=30, fontcolor=(255, 0, 0), backgroundcolor=None):
+        # 通过字体文件获取字体对象
+        font_obj = pygame.font.Font("./font/font.ttf",textheight)
+        #   配置要显示的文字
+        text_obj = font_obj.render(text, True, fontcolor, backgroundcolor)
+        # 获取要显示的对象的rect
+        text_rect = text_obj.get_rect()
+        # 设置显示对象的坐标
+        text_rect.topleft = (x, y)
+        # 绘制字到指定区域
+        self.screen.blit(text_obj, text_rect)
+
     def main(self):
         # 播放背景音乐
         self.sound.playbackgroundmusic()
@@ -277,7 +322,11 @@ class Manager(object):
         self.new_enemy()
         while True:
             # 把背景图片贴到窗口
-            self.screen.blit(self.background, (0, 0))
+            # self.screen.blit(self.background, (0, 0))
+            self.map.move()
+            self.map.draw()
+            # 绘制文字
+            self.drawtext("HP:1000",20,10)
             # 遍历所有的事件
             for event in pygame.event.get():
                 # 判断事件类型 如果是退出
